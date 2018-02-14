@@ -45,7 +45,8 @@ function getStatBundles() {
     .map(staticFile => WebAppInternals.staticFiles[staticFile])
     .filter(statFileFilter)
     .map(statFile => ({
-      name: statFile.hash,
+      name: statFile.absolutePath.match(/programs\/(.+)\//)[1],
+      hash: statFile.hash,
       stats: readOrNull(statFile.absolutePath),
     }));
 }
@@ -131,14 +132,10 @@ function statsMiddleware(request, response) {
       "Unable to retrieve stats"
     );
   }
-
   sendJSON({
     name: "main",
     children: statBundles.map((statBundle, index, array) => ({
-      // TODO: If multiple bundles, could
-      // show abbr. bundle names with:
-      //   `...${bundle.name.substr(-3)}`,
-      name: "bundle" + (array.length > 1 ? ` (${index + 1})` : ""),
+      name: "bundle" + (array.length > 1 ? ` (${statBundle.name})` : ""),
       type: typeBundle,
       children: d3TreeFromStats(statBundle.stats),
     }))
